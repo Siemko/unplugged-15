@@ -8,6 +8,8 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Record } from "./record";
 
 interface Inputs {
   name: string;
@@ -16,9 +18,40 @@ interface Inputs {
 }
 
 export function GuestBook() {
+  const list = useQuery({
+    queryKey: ["list"],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/guestbook`);
+      const { data } = await response.json();
+      return data.map((record: Record<string, { S: string }>) => ({
+        name: record.userName.S,
+        email: record.userEmail.S,
+        message: record.content.S,
+        recordId: record.recordId.S,
+      }));
+    },
+  });
+
+  const add = useMutation({
+    mutationKey: ["add"],
+    mutationFn: async (data: Inputs) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/guestbook`,
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      list.refetch();
+    },
+  });
+
   const { register, handleSubmit } = useForm<Inputs>();
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+  const onSubmit: SubmitHandler<Inputs> = (data) => add.mutate(data);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -57,20 +90,21 @@ export function GuestBook() {
             </div>
           </Card>
           <div className="w-full max-w-xl grid grid-cols-2 gap-4">
-            <Card className="p-4">
-              <h3 className="text-lg font-bold">John Doe</h3>
-              <p className="text-zinc-500 dark:text-zinc-400">
-                johndoe@example.com
-              </p>
-              <p>Lovely website! Keep up the good work.</p>
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-lg font-bold">Jane Doe</h3>
-              <p className="text-zinc-500 dark:text-zinc-400">
-                janedoe@example.com
-              </p>
-              <p>Amazing website! I enjoyed my visit.</p>
-            </Card>
+            {list.data?.map(
+              (record: {
+                recordId: string;
+                name: string;
+                email: string;
+                message: string;
+              }) => (
+                <Record
+                  key={record.recordId}
+                  name={record.name}
+                  email={record.email}
+                  message={record.message}
+                />
+              ),
+            )}
           </div>
         </main>
         <footer className="bg-zinc-700 dark:bg-zinc-800 text-white w-full py-4 mt-auto">

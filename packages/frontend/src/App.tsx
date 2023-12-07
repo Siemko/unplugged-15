@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { GuestBook } from './components/guest-book'
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+import { GuestBook } from "./components/guest-book";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
-    <>
-    <GuestBook />
+    <QueryClientProvider client={queryClient}>
+      <GuestBook />
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -33,8 +36,8 @@ function App() {
       <pre>
         <code>{JSON.stringify(import.meta.env.VITE_API_URL)}</code>
       </pre>
-    </>
-  )
+    </QueryClientProvider>
+  );
 }
 
-export default App
+export default App;
